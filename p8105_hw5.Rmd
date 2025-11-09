@@ -1,0 +1,88 @@
+---
+title: "p8105_hw5"
+author: "Maliha Safdar"
+date: "2025-11-06"
+output: github_document
+---
+
+
+```{r}
+library(tidyverse)
+library(broom)
+```
+
+
+## Problem 1
+
+
+`In this question we will construct a function for birthdays which will produce a result such that when n number of people are put into a room, at least two people have repeating birthdays. We will know that the result is acheived when we run the bday_sim (birthday simulation) and the result is true.`
+
+```{r}
+
+bday_sim = function(n_room) {
+  
+  birthdays = sample( 1:365, n_room, replace = TRUE) #n_room the no. of people in a room
+  
+  repeated_bday = length(unique(birthdays)) < n_room # this means that if the length of unique birthdays is less than people in the room, than at least two people have repeated birthdays
+  
+  repeated_bday
+}
+
+bday_sim(50) #running the simulation 20 times. The result was false which means no repeated birthdays yet. When it was repeated 50 times, the result was true because the chance of increases when we increase the number of times people are put into the room and they share sam birthdays. 
+
+```
+
+`Next, the function will be run 10000 for groups 2 to 50 (which is number of people that will be put in the room) then, a probability plot will be constructed to show how the probabilty changes as we increase the group size when running the function 10000 times.`
+
+```{r}
+bday_sim_results = 
+  expand.grid(
+    bdays = 2:50,
+    iter = 1:50
+  ) |>
+  mutate(
+    result = map_lgl(bdays, bday_sim)
+  ) |>
+    group_by(
+      bdays
+    ) |>
+  summarize(
+    prob_repeat = mean(result)
+  )
+
+
+bday_sim_results |>
+  ggplot(aes(x = bdays, y = prob_repeat)) +
+  geom_point() +
+  geom_line()
+
+```
+
+`As expected, when the number of people that are put in a room increases, the probablity that we have repeated birthdays (of at least two people) increases as well. We should also note that the number of times the function is run also plays a key role in this increase, since we ran it 10000 times.`
+
+
+## Problem 3
+
+```{r}
+homicide_data = read.csv("homicide-data.csv")
+```
+
+Describe the raw data:
+
+
+```{r}
+unsolved_homicide_data <- homicide_data |>
+  mutate(
+    city_state = str_c(city, state, sep = ","),
+    unsolved = disposition%in%c("Closed without arrest", "Open/No arrest")
+  ) |>
+  group_by(city_state) |>
+  summarise(
+    total_homicides = n(),
+    unsolved_homicides = sum(unsolved, na.rm = TRUE))
+
+knitr::kable(head(unsolved_homicide_data, 5))
+  
+```
+
+
