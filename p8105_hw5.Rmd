@@ -150,3 +150,29 @@ all_cities_prop_ci <- homicide_data |>
 knitr::kable(head(all_cities_prop_ci, 6))
 ```
 
+` Now we will create a plot that shows the estimates and CIs for each city.`
+
+```{r}
+all_cities_plot <- all_cities_prop_ci |>
+  arrange(unsolved_homicides_prop) |>
+  mutate(city_state = factor(city_state, levels = city_state))
+
+all_cities_plot |>
+  ggplot(aes(x = city_state, y = unsolved_homicides_prop)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = ci_low, ymax = ci_high)) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, size = 10)) +
+  labs(
+    title = "Proportion of Unsolved Homicide Cases in Different US Cities",
+    x = "City, State",
+    y = "Unsolved Homicide Proportion"
+  )
+  
+  
+```
+
+
+
+
+
