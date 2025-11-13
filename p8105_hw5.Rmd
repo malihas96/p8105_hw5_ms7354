@@ -85,4 +85,68 @@ knitr::kable(head(unsolved_homicide_data, 5))
   
 ```
 
+`Now we will first find the proportion of unsolved homicides and yje confidence intervals for Baltimore,MD and then for all the cities that are contained within the dataset using prop.test and broom::tidy.`
+
+```{r}
+baltimore_unsolved_counts <- homicide_data |>
+    mutate(
+      city_state = str_c(city, ",", state), 
+      unsolved = disposition%in%c("Closed without arrest", "Open/No arrest")
+    ) |>
+    filter(city_state == "Baltimore,MD") |>
+    summarise(
+      total_homicides = n(),
+      unsolved_homicides = sum(unsolved, na.rm = TRUE),
+      .groups = "drop"
+    )
+
+
+baltimore_prop_test <- prop.test(
+  baltimore_unsolved_counts$unsolved_homicides,
+  baltimore_unsolved_counts$total_homicides,
+  correct = FALSE
+)
+
+baltimore_tidy <- tidy(baltimore_prop_test) #this shows us our estimate proportion and confidence intervals but we need to pull it.
+
+baltimore_result <- baltimore_tidy |>
+  select(
+    unsolved_homicides_prop = estimate,
+    ci_low = conf.low,
+    ci_high = conf.high
+  )
+
+baltimore_result
+```
+
+```{r}
+
+all_cities_prop_ci <- homicide_data |>
+  mutate(
+    city_state = str_c(city, ",", state), 
+      unsolved = disposition%in%c("Closed without arrest", "Open/No arrest")
+  
+    ) |>
+  group_by(city_state) |>
+  summarise(
+      total_homicides = n(),
+      unsolved_homicides = sum(unsolved, na.rm = TRUE),
+      .groups = "drop"
+  ) |>
+  mutate(
+    all_cities_result = map2(unsolved_homicides,total_homicides, ~prop.test(.x, .y, correct = FALSE)),
+    all_cities_tidy_result = map(all_cities_result, tidy)
+  ) |>
+  unnest(all_cities_tidy_result) |>
+  select(
+    city_state,
+    unsolved_homicides,
+    total_homicides,
+    unsolved_homicides_prop = estimate,
+    ci_low = conf.low,
+    ci_high = conf.high
+  )
+
+knitr::kable(head(all_cities_prop_ci, 6))
+```
 
